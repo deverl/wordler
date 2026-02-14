@@ -167,6 +167,30 @@
             transform: translateY(0);
         }
 
+        .btn-load {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-load:hover {
+            background: #5568d3;
+        }
+
+        #file-input {
+            padding: 8px;
+            border: 2px solid #d3d6da;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
         .results {
             margin-top: 30px;
             padding: 20px;
@@ -228,6 +252,16 @@
         <h1>🟩 Wordle Solver</h1>
 
         <div class="section">
+            <div class="section-title">Word List</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="file" id="file-input" accept=".txt" style="flex: 1;">
+                <button class="btn-load" onclick="loadWordFile()">Load File</button>
+                <button class="btn-load" onclick="useDefaultWords()">Use Default</button>
+            </div>
+            <div id="file-status" style="margin-top: 8px; font-size: 0.85em; color: #666;"></div>
+        </div>
+
+        <div class="section">
             <div class="section-title">Known Letters (correct position)</div>
             <div class="letter-boxes" id="known-boxes">
                 <input type="text" class="letter-box" maxlength="1" data-index="0">
@@ -274,7 +308,7 @@
 
     <script>
         // Common 5-letter word list (Wordle uses a subset of common words)
-        const WORD_LIST = [
+        let WORD_LIST = [
             "about", "above", "abuse", "actor", "acute", "admit", "adopt", "adult", "after", "again",
             "agent", "agree", "ahead", "alarm", "album", "alert", "align", "alike", "alive", "allow",
             "alone", "along", "alter", "amber", "amend", "among", "ample", "amuse", "angel", "anger",
@@ -331,7 +365,62 @@
             "worst", "worth", "would", "wound", "write", "wrong", "wrote", "young", "youth", "zones"
         ];
 
+        const DEFAULT_WORD_LIST = [...WORD_LIST]; // Keep a copy of the default list
         let negativeRowCount = 0;
+
+        function updateFileStatus(message, isError = false) {
+            const status = document.getElementById('file-status');
+            status.textContent = message;
+            status.style.color = isError ? '#ef4444' : '#10b981';
+        }
+
+        function loadWordFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                updateFileStatus('Please select a file first', true);
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const words = text.split('\n')
+                    .map(word => word.trim().toLowerCase())
+                    .filter(word => word.length === 5 && /^[a-z]+$/.test(word));
+                
+                if (words.length === 0) {
+                    updateFileStatus('No valid 5-letter words found in file', true);
+                    return;
+                }
+                
+                WORD_LIST = words;
+                updateFileStatus(`Loaded ${words.length} words from ${file.name}`);
+                
+                // Clear results if they were showing
+                document.getElementById('results').classList.add('hidden');
+            };
+            
+            reader.onerror = function() {
+                updateFileStatus('Error reading file', true);
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function useDefaultWords() {
+            WORD_LIST = [...DEFAULT_WORD_LIST];
+            updateFileStatus(`Using default word list (${WORD_LIST.length} words)`);
+            document.getElementById('file-input').value = '';
+            
+            // Clear results if they were showing
+            document.getElementById('results').classList.add('hidden');
+        }
+
+        // Initialize with default status
+        updateFileStatus(`Using default word list (${WORD_LIST.length} words)`);
 
         // Auto-focus next box
         document.querySelectorAll('.letter-box').forEach((box, index, boxes) => {
