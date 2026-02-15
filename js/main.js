@@ -68,7 +68,7 @@ function updateFileStatus(message, isError = false) {
 // Automatically load words5.txt from the server
 async function loadWordsFromServer() {
     try {
-        const response = await fetch('words5.txt');
+        const response = await fetch('data/words5.txt');
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
