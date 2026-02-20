@@ -96,6 +96,66 @@ async function loadWordsFromServer() {
 // Load words when page loads
 window.addEventListener('DOMContentLoaded', loadWordsFromServer);
 
+// Collect letters that are known to be in the word (from known, include, and wrong positions)
+function getIncludedLetters() {
+    const letters = new Set();
+
+    // Known letters (correct position)
+    document.querySelectorAll('#known-boxes .letter-box').forEach(box => {
+        const v = box.value.toLowerCase();
+        if (v && v.match(/[a-z]/)) letters.add(v);
+    });
+
+    // Include letters (wrong position)
+    document.querySelectorAll('#include-boxes .letter-box').forEach(box => {
+        const v = box.value.toLowerCase();
+        if (v && v.match(/[a-z]/)) letters.add(v);
+    });
+
+    // Wrong positions (each row lists letters that can't be in those spots)
+    document.querySelectorAll('.negative-row .letter-box').forEach(box => {
+        const v = box.value.toLowerCase();
+        if (v && v.match(/[a-z]/)) letters.add(v);
+    });
+
+    return letters;
+}
+
+// Validate exclude input: remove any letters that appear in known/include/wrong positions
+function validateExcludeInput() {
+    const excludeInput = document.getElementById('exclude-input');
+    const includedLetters = getIncludedLetters();
+    const value = excludeInput.value.toLowerCase();
+    const filtered = value.split('').filter(c => {
+        if (!c.match(/[a-z]/)) return true; // keep non-letters (will strip later, but allow typing)
+        return !includedLetters.has(c);
+    }).join('');
+    if (filtered !== value) {
+        excludeInput.value = filtered;
+    }
+}
+
+// Attach validation to exclude input
+document.addEventListener('DOMContentLoaded', () => {
+    const excludeInput = document.getElementById('exclude-input');
+    if (excludeInput) {
+        excludeInput.addEventListener('input', validateExcludeInput);
+        excludeInput.addEventListener('paste', () => setTimeout(validateExcludeInput, 0));
+    }
+});
+
+// When known/include/wrong fields change, re-validate exclude (removes letters that are now in those fields)
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.querySelector('.container');
+    if (container) {
+        container.addEventListener('input', (e) => {
+            if (e.target.matches('#known-boxes .letter-box, #include-boxes .letter-box, .negative-row .letter-box')) {
+                validateExcludeInput();
+            }
+        });
+    }
+});
+
 // Auto-focus next box
 document.querySelectorAll('.letter-box').forEach((box, index, boxes) => {
     box.addEventListener('input', function(e) {
