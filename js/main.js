@@ -156,23 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Auto-focus next box
-document.querySelectorAll('.letter-box').forEach((box, index, boxes) => {
-    box.addEventListener('input', function(e) {
-        this.value = this.value.toUpperCase();
-        if (this.value && index < boxes.length - 1) {
-            const parent = this.parentElement;
-            const nextBox = parent.querySelectorAll('.letter-box')[index + 1];
-            if (nextBox) nextBox.focus();
-        }
-    });
+// Auto-focus next box within each row (known + include)
+document.querySelectorAll('.letter-boxes').forEach((group) => {
+    const boxes = group.querySelectorAll('.letter-box');
+    boxes.forEach((box, index) => {
+        box.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            if (this.value && index < boxes.length - 1) {
+                boxes[index + 1].focus();
+            }
+        });
 
-    box.addEventListener('keydown', function(e) {
-        if (e.key === 'Backspace' && !this.value && index > 0) {
-            const parent = this.parentElement;
-            const prevBox = parent.querySelectorAll('.letter-box')[index - 1];
-            if (prevBox) prevBox.focus();
-        }
+        box.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && !this.value && index > 0) {
+                boxes[index - 1].focus();
+            }
+        });
     });
 });
 
